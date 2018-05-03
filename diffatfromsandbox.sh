@@ -12,9 +12,9 @@ do
     dir=`dirname $fp`
     file=`basename ${fp%.*}`
     if [ -z "$args" ]; then
-        args="edit $file.old | vert diffsplit $dir/$file.new"
+        args="edit $file.old | vert diffpatch $dir/`basename $file .patch`"
     else
-        args="$args  | tabedit $file.old | vert diffsplit $dir/$file.new"
+        args="$args  | tabedit $file.old | vert diffpatch $dir/`basename $file .patch`"
     fi
 done
 
@@ -22,6 +22,8 @@ if [ -x "$(command -v xclip)" ]; then
     echo "copied into clipboard"
     echo "vimdiff -c '$args'" | xclip -sel clip
 else
-    echo "execute the following: "
+    echo "Copy the following"
     echo "vimdiff -c '$args'"
 fi
+
+echo "Next step: go to a valid sandbox and paste the result"
