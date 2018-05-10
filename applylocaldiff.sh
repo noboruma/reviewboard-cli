@@ -21,6 +21,7 @@ done
 if [ -x "$(command -v xclip)" ]; then
     echo "copied into clipboard"
     echo "vimdiff -c '$args'" | xclip -sel clip
+    echo "vimdiff -c '$args'"
 else
     echo "execute the following: "
     echo "vimdiff -c '$args'"
