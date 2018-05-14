@@ -22,7 +22,13 @@ function download_and_patch() {
 
     total_comments=`echo $comments | jq '.total_results'`
     total_comments=`expr $total_comments - 1`
-    cp $out_file.new $out_file.new.ref
+    if [ ! -f $out_file.new ]; then
+        cp $out_file.old $out_file.ref
+    else
+        cp $out_file.new $out_file.ref
+    fi
+    touch $out_file.new
+    touch $out_file.old
     for i in $(seq 0 $total_comments); do
         userid=`echo $comments | jq '.diff_comments['$i'].links.user.title'`
         timestamp=`echo $comments | jq '.diff_comments['$i'].timestamp'`
@@ -33,7 +39,7 @@ function download_and_patch() {
         # Add the comment line
         last_line=`expr $first_line + $num_lines`
         formated_comment=`echo "/* $timestamp, $userid: $text */"`
-        cp $out_file.new $out_file.tmp.$i
+        cp $out_file.ref $out_file.tmp.$i
         if jq -e '.diff_comments['$i'].extra_data.severity' >/dev/null 2>&1 <<<"$comments"; then
             sed -i "${last_line}i /* @@ end @@ */ " $out_file.tmp.$i
             sed -i "${first_line}i /* @@ begin @@ */" $out_file.tmp.$i
@@ -43,15 +49,19 @@ function download_and_patch() {
         fi
     done
     for i in $(seq 0 $total_comments); do
-        merge $out_file.new $out_file.new.ref $out_file.tmp.$i
+        if [ ! -f $out_file.new ]; then
+            merge $out_file.old $out_file.ref $out_file.tmp.$i 2>/dev/null
+        else
+            merge $out_file.new $out_file.ref $out_file.tmp.$i 2>/dev/null
+        fi
         rm $out_file.tmp.$i
     done
-    rm $out_file.new.ref
+    rm $out_file.ref
 
     #Remove all conflicts and consider them as adds
-    sed -i '/>>>>>>.*/d' $out_file.new
-    sed -i '/<<<<<<.*/d' $out_file.new
-    sed -i '/======.*/d' $out_file.new
+    sed -i '/>>>>>>.*/d' $out_file.{new,old}
+    sed -i '/<<<<<<.*/d' $out_file.{new,old}
+    sed -i '/======.*/d' $out_file.{new,old}
 
     diff -u $out_file.old $out_file.new > $out_file.patch
     echo "$out_file.patch generated"
@@ -59,7 +69,7 @@ function download_and_patch() {
 
 rbdiff=`curl -s -k $REVIEWBOARD_URL/api/review-requests/$rbid/diffs/ -H "Accept: application/json"`
 last_diff=`echo $rbdiff | jq '.total_results'`
-echo "This RB contains $last_diff diffs"
+echo "This RB contains $last_diff revisions"
 echo "Diff last diff against original"
 
 rbdifffiles=`curl -s -k $REVIEWBOARD_URL/api/review-requests/$rbid/diffs/$last_diff/files/ -H "Accept: application/json"`
@@ -69,6 +79,7 @@ mkdir -p $outFolder
 
 pids=""
 total_files=`echo $rbdifffiles | jq '.total_results'`
+echo "Processing $total_files diffs"
 total_files=`expr $total_files - 1`
 for i in $(seq 0 $total_files); do
     fileid=`echo $rbdifffiles | jq '.files['$i'].id'`
