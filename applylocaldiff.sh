@@ -12,9 +12,9 @@ do
     dir=`dirname $fp`
     file=`basename ${fp%.*}`
     if [ -z "$args" ]; then
-        args="edit $file.old | vert diffsplit $dir/$file.new"
+        args="edit $dir/$file.old | vert diffsplit $dir/$file.new"
     else
-        args="$args  | tabedit $file.old | vert diffsplit $dir/$file.new"
+        args="$args  | tabedit $dir/$file.old | vert diffsplit $dir/$file.new"
     fi
 done
 

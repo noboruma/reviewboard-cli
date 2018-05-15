@@ -12,9 +12,9 @@ do
     dir=`dirname $fp`
     file=`basename ${fp%.*}`
     if [ -z "$args" ]; then
-        args="edit $file.old | vert diffpatch $dir/`basename $file .patch`"
+        args="edit $dir/$file.old | vert diffpatch $dir/`basename $file .patch`"
     else
-        args="$args  | tabedit $file.old | vert diffpatch $dir/`basename $file .patch`"
+        args="$args  | tabedit $dir/$file.old | vert diffpatch $dir/`basename $file .patch`"
     fi
 done
 
