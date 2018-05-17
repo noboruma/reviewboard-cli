@@ -16,8 +16,19 @@ function download_and_patch() {
 
     curl -k --create-dirs $input_oldfile -o $out_file.old -sS
     curl -k --create-dirs $input_newfile -o $out_file.new -sS
-
-    ## Get and add comments
+    if [ $(wc -l <$out_file.old) -le "2" ]; then
+        if `cat $out_file.old` | jq -e '.stat' >/dev/null 2>&1; then
+            rm $out_file.old
+            touch $out_file.old
+        fi
+    fi
+    if [ $(wc -l <$out_file.new) -le "2" ]; then
+        if `cat $out_file.new` | jq -e '.stat' >/dev/null 2>&1; then
+            rm $out_file.new
+            touch $out_file.new
+        fi
+    fi
+    # Get and add comments
     comments=`curl -s -k --create-dirs $comments_url -H "Accept: application/json"`
 
     total_comments=`echo $comments | jq '.total_results'`
